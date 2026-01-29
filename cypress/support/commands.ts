@@ -8,13 +8,13 @@
 // Extend Cypress interface with custom commands
 declare namespace Cypress {
   interface Chainable {
-    login(username: string, password?: string): Chainable<void>;
-    createQuestion(title: string, description: string): Chainable<void>;
-    addComment(content: string): Chainable<void>;
+    login(username: string, password?: string): Chainable<any>;
+    createQuestion(title: string, description: string): Chainable<any>;
+    addComment(content: string): Chainable<any>;
     retryWithBackoff<T>(action: () => T, maxRetries?: number, baseDelay?: number): Chainable<T>;
-    waitForElement(selector: string, timeout?: number): Chainable<void>;
-    safeClick(selector: string): Chainable<void>;
-    safeType(selector: string, text: string): Chainable<void>;
+    waitForElement(selector: string, timeout?: number): Chainable<any>;
+    safeClick(selector: string): Chainable<any>;
+    safeType(selector: string, text: string): Chainable<any>;
   }
 }
 
@@ -54,14 +54,18 @@ Cypress.Commands.add('login', (username: string, password = 'test123') => {
   };
 
   // Simple retry with exponential backoff and jitter
-  let attempt = 0;
-  const tryLogin = () => {
-    return attemptLogin().catch((error) => {
+  const tryLogin = (attempt = 0): Cypress.Chainable<any> => {
+    if (attempt > 0) {
+      const delay = getJitterDelay(baseDelay, attempt - 1);
+      cy.log(`⚠️  Login attempt ${attempt} failed, retrying in ${Math.round(delay)}ms...`);
+      cy.wait(delay);
+    }
+    
+    return attemptLogin().then((result) => {
+      return result;
+    }).then((error: any) => {
       if (attempt < maxRetries) {
-        attempt++;
-        const delay = getJitterDelay(baseDelay, attempt - 1);
-        cy.log(`⚠️  Login attempt ${attempt} failed, retrying in ${Math.round(delay)}ms...`);
-        return cy.wait(delay).then(() => tryLogin());
+        return tryLogin(attempt + 1);
       }
       throw error;
     });
@@ -91,14 +95,18 @@ Cypress.Commands.add('createQuestion', (title: string, description: string) => {
     });
   };
 
-  let attempt = 0;
-  const tryCreate = () => {
-    return attemptCreate().catch((error) => {
+  const tryCreate = (attempt = 0): Cypress.Chainable<any> => {
+    if (attempt > 0) {
+      const delay = getJitterDelay(baseDelay, attempt - 1);
+      cy.log(`⚠️  Create question attempt ${attempt} failed, retrying in ${Math.round(delay)}ms...`);
+      cy.wait(delay);
+    }
+    
+    return attemptCreate().then((result) => {
+      return result;
+    }).then((error: any) => {
       if (attempt < maxRetries) {
-        attempt++;
-        const delay = getJitterDelay(baseDelay, attempt - 1);
-        cy.log(`⚠️  Create question attempt ${attempt} failed, retrying in ${Math.round(delay)}ms...`);
-        return cy.wait(delay).then(() => tryCreate());
+        return tryCreate(attempt + 1);
       }
       throw error;
     });
@@ -124,14 +132,18 @@ Cypress.Commands.add('addComment', (content: string) => {
     });
   };
 
-  let attempt = 0;
-  const tryAdd = () => {
-    return attemptAdd().catch((error) => {
+  const tryAdd = (attempt = 0): Cypress.Chainable<any> => {
+    if (attempt > 0) {
+      const delay = getJitterDelay(baseDelay, attempt - 1);
+      cy.log(`⚠️  Add comment attempt ${attempt} failed, retrying in ${Math.round(delay)}ms...`);
+      cy.wait(delay);
+    }
+    
+    return attemptAdd().then((result) => {
+      return result;
+    }).then((error: any) => {
       if (attempt < maxRetries) {
-        attempt++;
-        const delay = getJitterDelay(baseDelay, attempt - 1);
-        cy.log(`⚠️  Add comment attempt ${attempt} failed, retrying in ${Math.round(delay)}ms...`);
-        return cy.wait(delay).then(() => tryAdd());
+        return tryAdd(attempt + 1);
       }
       throw error;
     });
@@ -170,8 +182,8 @@ Cypress.Commands.add('retryWithBackoff', (
 /**
  * Wait for element with retry
  */
-Cypress.Commands.add('waitForElement', (selector: string, timeout = 10000) => {
-  return cy.get(selector, { timeout }).should('exist').should('be.visible');
+Cypress.Commands.add('waitForElement', (selector: string, timeout = 10000): void => {
+  cy.get(selector, { timeout }).should('exist').should('be.visible');
 });
 
 /**
@@ -181,13 +193,18 @@ Cypress.Commands.add('safeClick', (selector: string) => {
   const maxRetries = 3;
   let attempt = 0;
 
-  const tryClick = () => {
-    return cy.contains(selector, { timeout: 8000 }).click({ force: true }).catch((error) => {
+  const tryClick = (attempt = 0): Cypress.Chainable<any> => {
+    if (attempt > 0) {
+      const delay = getJitterDelay(500, attempt - 1);
+      cy.log(`⚠️  Click attempt ${attempt} failed, retrying...`);
+      cy.wait(delay);
+    }
+    
+    return cy.contains(selector, { timeout: 8000 }).click({ force: true }).then((result) => {
+      return result;
+    }).then((error: any) => {
       if (attempt < maxRetries) {
-        attempt++;
-        const delay = getJitterDelay(500, attempt - 1);
-        cy.log(`⚠️  Click attempt ${attempt} failed, retrying...`);
-        return cy.wait(delay).then(() => tryClick());
+        return tryClick(attempt + 1);
       }
       throw error;
     });
@@ -203,13 +220,18 @@ Cypress.Commands.add('safeType', (selector: string, text: string) => {
   const maxRetries = 3;
   let attempt = 0;
 
-  const tryType = () => {
-    return cy.get(selector, { timeout: 8000 }).clear().should('be.visible').type(text).catch((error) => {
+  const tryType = (attempt = 0): Cypress.Chainable<any> => {
+    if (attempt > 0) {
+      const delay = getJitterDelay(500, attempt - 1);
+      cy.log(`⚠️  Type attempt ${attempt} failed, retrying...`);
+      cy.wait(delay);
+    }
+    
+    return cy.get(selector, { timeout: 8000 }).clear().should('be.visible').type(text).then((result) => {
+      return result;
+    }).then((error: any) => {
       if (attempt < maxRetries) {
-        attempt++;
-        const delay = getJitterDelay(500, attempt - 1);
-        cy.log(`⚠️  Type attempt ${attempt} failed, retrying...`);
-        return cy.wait(delay).then(() => tryType());
+        return tryType(attempt + 1);
       }
       throw error;
     });
