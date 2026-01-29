@@ -1,9 +1,9 @@
 {
-  "completedAt": "2026-01-29T20:39:23.184Z",
-  "totalTests": 5,
-  "totalPassed": 4,
-  "totalFailed": 1,
+  "completedAt": "2026-01-29T20:48:44.051Z",
+  "totalTests": 2,
+  "totalPassed": 2,
+  "totalFailed": 0,
   "totalPending": 0,
   "totalSkipped": 0,
-  "duration": 18623
+  "duration": 5262
 }
